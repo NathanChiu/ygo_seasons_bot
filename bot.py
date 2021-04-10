@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-TOKEN = 'ODMwMzE2ODIxODY5MzYzMjEy.YHE6zA.YBQ3yFKbNVJeo40FwYpX-M2yyYM'
+TOKEN = 'ODMwMzE2ODIxODY5MzYzMjEy.YHE6zA.ynGT4tmXWWnjfxyPaJvx4DHCmsw'
 
 description = '''ninjaBot in Python'''
 bot = commands.Bot(command_prefix='?', description=description)
