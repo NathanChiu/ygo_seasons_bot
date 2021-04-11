@@ -52,7 +52,8 @@ class YGOSpreadsheet:
         Returns a list of registered usernames.
         """
         usernames = self.read_values(read_range=["A", "A"])
-        return self.flatten_list(usernames)
+        # Only show through all
+        return self.flatten_list(usernames)[1:]
 
     def get_headers(self):
         headers = self.read_values(read_range=["1", "1"])
@@ -69,7 +70,7 @@ class YGOSpreadsheet:
         """
         headers = self.get_headers()
         # Get the list of usernames
-        usernames = self.get_usernames()
+        usernames = self.usernames
         if username in usernames:
             row_num = usernames.index(username) + 1
         player_info = self.read_values(read_range=[f"{row_num}", f"{row_num}"])
@@ -77,6 +78,26 @@ class YGOSpreadsheet:
         player_info_dict = dict(zip(headers, self.flatten_list(player_info)))
         logger.info(player_info_dict)
         return player_info_dict
+
+    def create_new_player(self, username=None):
+        """
+        Creates a new player. Will first check if the username has already been used.
+        params:
+            username : string of the username to create a new entry for.
+        """
+        # Make sure that the player usename is unique.
+        if username in self.usernames:
+            raise ValueError(f"Username '{username}' already exists.")
+        else:
+            # Create a new entry at the bottom of the list.
+            # if N users exist, new entry should go in row N+2.
+            values_to_write = [username]
+            for i in range(len(self.get_headers())-1):
+                values_to_write.append("0")
+            logger.info(f"{values_to_write}")
+            new_row_num = len(self.usernames)+2
+            self.write_values(write_range=[f"{new_row_num}", f"{new_row_num}"], values=[values_to_write])
+
 
     def read_values(self, sheet_name='coin_tracker', read_range=['A1', 'A1']):
         """
@@ -110,19 +131,16 @@ class YGOSpreadsheet:
                      [[A1, A2, A3], [B1, B2, B3], [C1, C2, C3]].
                      Empty cells should be populated with an empty string.
         """
-        try:
-            if None in write_range:
-                raise ValueError(f"write_range should not have None, got {write_range}.")
-            body = {
-                'values': values
-            }
-            range_string = f"{sheet_name}!{write_range[0]}:{write_range[1]}"
-            result = self.sheet.values().update(
-                spreadsheetId=AFKOIN_SHEET_ID, range=range_string,
-                valueInputOption='USER_ENTERED', body=body).execute()
-            logger.info(f"{result.get('updatedCells')} cells updated.")
-        except Exception as e:
-            logger.info(e)
+        if None in write_range:
+            raise ValueError(f"write_range should not have None, got {write_range}.")
+        body = {
+            'values': values
+        }
+        range_string = f"{sheet_name}!{write_range[0]}:{write_range[1]}"
+        result = self.sheet.values().update(
+            spreadsheetId=AFKOIN_SHEET_ID, range=range_string,
+            valueInputOption='USER_ENTERED', body=body).execute()
+        logger.info(f"{result.get('updatedCells')} cells updated.")
         self.get_all_records()
 
 
@@ -146,6 +164,14 @@ class YGOSpreadsheet:
             with open('token.json', 'w') as token:
                 token.write(self.creds.to_json())
 
+    @property
+    def usernames(self):
+        return self.get_usernames()
+
+    @property
+    def all_records(self):
+        return self.get_all_records()
+
 
 if __name__ == '__main__':
     # Set up logger
@@ -155,10 +181,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     ygos = YGOSpreadsheet()
-    ygos.read_values()
-    logger.info(ygos.read_values(read_range=["A", "A"]))
-    ygos.read_values(read_range=["A1", "E5"])
-    values = [["Evan", 50, 5]]
-    ygos.write_values(write_range=["A6", "E"], values=values)
-    ygos.get_player_info("Alice")
+    logger.info(ygos.usernames)
+    # logger.info(ygos.read_values(read_range=["A", "A"]))
+    # ygos.read_values(read_range=["A1", "E5"])
+    # values = [["Evan", 50, 5]]
+    # ygos.write_values(write_range=["A6", "E"], values=values)
+    # ygos.get_player_info("Alice")
+    ygos.create_new_player("Fred")
     # print(ygos.sheet.get_all_records())
