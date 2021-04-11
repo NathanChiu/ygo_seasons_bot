@@ -6,13 +6,15 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+# SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 # The ID and range of a sample spreadsheet.
-SAMPLE_SPREADSHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
-SAMPLE_RANGE_NAME = 'Class Data!A2:E'
+# SAMPLE_SPREADSHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
+AFKOIN_SHEET_ID = '19lTpDVxdIcQqZ8CSXa2I3y_ENE_A5znImgvdR3-6A9Q'
+SAMPLE_RANGE_NAME = 'coin_tracker!A1:E'
 
-client_json = 'client_secret_564195501245-e1vi23vkji0s394h89t3hil82ldkcifd.apps.googleusercontent.com.json'
+client_json = 'client.json'
 
 def main():
     """Shows basic usage of the Sheets API.
@@ -31,7 +33,7 @@ def main():
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
                 # 'credentials.json', SCOPES)
-                'client_secret_564195501245-e1vi23vkji0s394h89t3hil82ldkcifd.apps.googleusercontent.com.json', SCOPES)
+                'client.json', SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
         with open('token.json', 'w') as token:
@@ -41,17 +43,40 @@ def main():
 
     # Call the Sheets API
     sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
+
+    result = sheet.values().get(spreadsheetId=AFKOIN_SHEET_ID,
                                 range=SAMPLE_RANGE_NAME).execute()
     values = result.get('values', [])
-
+    # print(values)
+    # return
     if not values:
         print('No data found.')
     else:
-        print('Name, Major:')
+        print('Username: Total AFKOins')
         for row in values:
             # Print columns A and E, which correspond to indices 0 and 4.
-            print('%s, %s' % (row[0], row[4]))
+            print('%s, %s' % (row[0], row[1]))
+
+    result = sheet.values().get(spreadsheetId=AFKOIN_SHEET_ID,
+                                range='coin_tracker!A1:A1').execute()
+    values = result.get('values', [])
+    print(values)
+
+
+    range_name = 'coin_tracker!A5:E'
+    values = [
+        [
+            "Daria", 40, 4
+        ],
+        # Additional rows ...
+    ]
+    body = {
+        'values': values
+    }
+    result = service.spreadsheets().values().update(
+        spreadsheetId=AFKOIN_SHEET_ID, range=range_name,
+        valueInputOption='USER_ENTERED', body=body).execute()
+    print('{0} cells updated.'.format(result.get('updatedCells')))
 
 if __name__ == '__main__':
     main()
