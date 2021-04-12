@@ -2,7 +2,7 @@ import logging
 import coloredlogs
 import sys
 import os
-from src.ygo_sheet_grabber.spreadsheet import YGOSpreadsheet
+from src.ygo_bot.ygo_bot import start_bot
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +13,4 @@ if __name__ == "__main__":
     coloredlogs.install(level=logging.INFO)
     logging.basicConfig(level=logging.INFO)
 
-    ygos = YGOSpreadsheet(json_directory=os.path.join('src', 'ygo_sheet_grabber'))
-    logger.info(ygos.usernames)
-    logger.info(ygos.all_records)
+    start_bot()
