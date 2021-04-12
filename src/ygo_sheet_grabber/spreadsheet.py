@@ -64,6 +64,16 @@ class YGOSpreadsheet:
         values =  self.read_values(read_range=["A", "Z"])
         return values
 
+    def get_all_player_info(self):
+        all_records = self.get_all_records()
+        all_records.pop(0)
+        headers = self.headers
+        player_info_dicts = {}
+        for record in all_records:
+            name = record[0]
+            player_info_dicts[name] = dict(zip(headers, record))
+        return player_info_dicts
+
     def get_usernames(self):
         """
         Returns a list of registered usernames.
@@ -88,8 +98,9 @@ class YGOSpreadsheet:
         headers = self.headers
         # Get the list of usernames
         usernames = self.usernames
+        logger.info(username)
         if username in usernames:
-            row_num = usernames.index(username) + 1
+            row_num = usernames.index(username) + 2
         player_info = self.read_values(read_range=[f"{row_num}", f"{row_num}"])
         player_info_dict = dict(zip(headers, flatten_list(player_info)))
         logger.info(player_info_dict)
