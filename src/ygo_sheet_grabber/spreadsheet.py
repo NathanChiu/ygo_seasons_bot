@@ -20,6 +20,28 @@ SAMPLE_RANGE_NAME = 'coin_tracker!A1:E'
 
 client_json = 'client.json'
 
+def excel_column_name(n):
+    """Number to Excel-style column name, e.g., 1 = A, 26 = Z, 27 = AA, 703 = AAA."""
+    name = ''
+    while n > 0:
+        n, r = divmod (n - 1, 26)
+        name = chr(r + ord('A')) + name
+    return name
+
+def excel_column_number(name):
+    """Excel-style column name to number, e.g., A = 1, Z = 26, AA = 27, AAA = 703."""
+    n = 0
+    for c in name:
+        n = n * 26 + 1 + ord(c) - ord('A')
+    return n
+
+def flatten_list(_list):
+    """
+    Convenience function to flatten a list, mainly because record from
+    google sheets come in nested lists.
+    """
+    return [item for sublist in _list for item in sublist]
+
 class YGOSpreadsheet:
     def __init__(self):
         """
@@ -40,24 +62,17 @@ class YGOSpreadsheet:
         values =  self.read_values(read_range=["A", "Z"])
         return values
 
-    def flatten_list(self, _list):
-        """
-        Convenience function to flatten a list, mainly because record from
-        google sheets come in nested lists.
-        """
-        return [item for sublist in _list for item in sublist]
-
     def get_usernames(self):
         """
         Returns a list of registered usernames.
         """
         usernames = self.read_values(read_range=["A", "A"])
         # Only show through all
-        return self.flatten_list(usernames)[1:]
+        return flatten_list(usernames)[1:]
 
     def get_headers(self):
         headers = self.read_values(read_range=["1", "1"])
-        return self.flatten_list(headers)
+        return flatten_list(headers)
 
     def get_player_info(self, username=None):
         """
@@ -68,14 +83,13 @@ class YGOSpreadsheet:
             a dictionary of player information, keyed by the sheet headers.
             e.g. {'Username': 'Alice', 'Total accumulated AFKoins': '10', 'AFKoins spent': '1'}
         """
-        headers = self.get_headers()
+        headers = self.headers
         # Get the list of usernames
         usernames = self.usernames
         if username in usernames:
             row_num = usernames.index(username) + 1
         player_info = self.read_values(read_range=[f"{row_num}", f"{row_num}"])
-        # logger.info(self.flatten_list(player_info))
-        player_info_dict = dict(zip(headers, self.flatten_list(player_info)))
+        player_info_dict = dict(zip(headers, flatten_list(player_info)))
         logger.info(player_info_dict)
         return player_info_dict
 
@@ -92,12 +106,30 @@ class YGOSpreadsheet:
             # Create a new entry at the bottom of the list.
             # if N users exist, new entry should go in row N+2.
             values_to_write = [username]
-            for i in range(len(self.get_headers())-1):
+            for i in range(len(self.headers)-1):
                 values_to_write.append("0")
             logger.info(f"{values_to_write}")
             new_row_num = len(self.usernames)+2
             self.write_values(write_range=[f"{new_row_num}", f"{new_row_num}"], values=[values_to_write])
 
+    def set_player_value(self, username=None, key=None, value=None):
+        """
+        Sets an attribute for a player to a certain value.
+        params:
+            username : string of the player name to alter the record of.
+            key : The header entry of the attribute to change.
+        """
+        if username in self.usernames:
+            if key is None or value is None:
+                raise ValueError(f"Need a key value pair, got key: {key}, value: {value}.")
+            elif key in self.headers:
+                row_num = self.usernames.index(username) + 2
+                col_num = self.headers.index(key) + 1
+                col_char = excel_column_name(col_num)
+                cell_name = f"{col_char}{row_num}"
+                self.write_values(write_range=[f"{cell_name}", f"{cell_name}"], values=[[value]])
+        else:
+            raise ValueError(f"Username '{username}' does not exist.")
 
     def read_values(self, sheet_name='coin_tracker', read_range=['A1', 'A1']):
         """
@@ -143,7 +175,6 @@ class YGOSpreadsheet:
         logger.info(f"{result.get('updatedCells')} cells updated.")
         self.get_all_records()
 
-
     def prepare_credentials(self):
         """
         Checks for a token to access the google sheet, and failing that creates one.
@@ -169,6 +200,10 @@ class YGOSpreadsheet:
         return self.get_usernames()
 
     @property
+    def headers(self):
+        return self.get_headers()
+
+    @property
     def all_records(self):
         return self.get_all_records()
 
@@ -187,5 +222,6 @@ if __name__ == '__main__':
     # values = [["Evan", 50, 5]]
     # ygos.write_values(write_range=["A6", "E"], values=values)
     # ygos.get_player_info("Alice")
-    ygos.create_new_player("Fred")
+    # ygos.create_new_player("Fred")
+    ygos.set_player_value(username="Fred", key="Current AFKoins", value="5")
     # print(ygos.sheet.get_all_records())
