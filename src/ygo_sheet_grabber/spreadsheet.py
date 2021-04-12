@@ -121,9 +121,19 @@ class YGOSpreadsheet:
             values_to_write = [username]
             for i in range(len(self.headers)-1):
                 values_to_write.append("0")
-            logger.info(f"{values_to_write}")
+            #logger.info(f"{values_to_write}")
+            logger.info("Updating coin_tracker")
             new_row_num = len(self.usernames)+2
             self.write_values(write_range=[f"{new_row_num}", f"{new_row_num}"], values=[values_to_write])
+            
+            #Match History Sheet - Stephen
+            values_to_write = [username]
+            for i in range(len(self.usernames)-1):
+                values_to_write.append("0")
+            values_to_write.append("NA")
+            logger.info("Updating match_history")
+            self.write_values(sheet_name='match_history',write_range=["B1", f"{len(self.usernames)}"], values=[self.usernames])
+            self.write_values(sheet_name='match_history',write_range=[f"{new_row_num}", f"{len(self.usernames)+1}"], values=[values_to_write])
 
     def set_player_value(self, username=None, key=None, value=None):
         """
