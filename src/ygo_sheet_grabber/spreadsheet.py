@@ -7,6 +7,7 @@ from google.oauth2.credentials import Credentials
 import logging
 import coloredlogs
 import sys
+import os
 
 logger = logging.getLogger(__name__)
 # If modifying these scopes, delete the file token.json.
@@ -17,8 +18,6 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 # SAMPLE_SPREADSHEET_ID = '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms'
 AFKOIN_SHEET_ID = '19lTpDVxdIcQqZ8CSXa2I3y_ENE_A5znImgvdR3-6A9Q'
 SAMPLE_RANGE_NAME = 'coin_tracker!A1:E'
-
-client_json = 'client.json'
 
 def excel_column_name(n):
     """Number to Excel-style column name, e.g., 1 = A, 26 = Z, 27 = AA, 703 = AAA."""
@@ -43,10 +42,13 @@ def flatten_list(_list):
     return [item for sublist in _list for item in sublist]
 
 class YGOSpreadsheet:
-    def __init__(self):
+    def __init__(self, json_directory=''):
         """
         Need to create the service and expose the sheet to usage.
         """
+        self.json_directory = json_directory
+        self.client_json_path = os.path.join(json_directory, 'clientjson')
+        self.token_json_path = os.path.join(json_directory, 'token.json')
         self.prepare_credentials()
         service = build('sheets', 'v4', credentials=self.creds)
         self.sheet = service.spreadsheets()
@@ -181,18 +183,18 @@ class YGOSpreadsheet:
         """
         self.creds = None
         # Use an existing token if it exists.
-        if os.path.exists('token.json'):
-            self.creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+        if os.path.exists(self.token_json_path):
+            self.creds = Credentials.from_authorized_user_file(self.token_json_path, SCOPES)
         # No existing token, need to log in using the OAuth consent screen.
         if not self.creds or not self.creds.valid:
             if self.creds and self.creds.expired and self.creds.refresh_token:
                 self.creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'client.json', SCOPES)
+                    self.client_json_path, SCOPES)
                 self.creds = flow.run_local_server(port=0)
             # Create a token so we don't need to manually log in next time.
-            with open('token.json', 'w') as token:
+            with open(self.token_json_path, 'w') as token:
                 token.write(self.creds.to_json())
 
     @property
