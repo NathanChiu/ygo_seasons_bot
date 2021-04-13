@@ -16,10 +16,7 @@ ygos = YGOSpreadsheet(json_directory=os.path.join('src', 'ygo_sheet_grabber'))
 async def on_ready():
     logger.info(f"Logged in username: {bot.user.name}, id: {bot.user.id}.")
     logger.info(ygos.usernames)
-    # logger.info(ygos.all_records)
     logger.info(ygos.get_all_player_info())
-    logger.info(ygos.get_player_info("klarq#4529"))
-
 
 @bot.command()
 async def hello(ctx):

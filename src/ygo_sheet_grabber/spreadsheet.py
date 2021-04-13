@@ -125,15 +125,22 @@ class YGOSpreadsheet:
             logger.info("Updating coin_tracker")
             new_row_num = len(self.usernames)+2
             self.write_values(write_range=[f"{new_row_num}", f"{new_row_num}"], values=[values_to_write])
-            
-            #Match History Sheet - Stephen
-            values_to_write = [username]
-            for i in range(len(self.usernames)-1):
-                values_to_write.append("0")
-            values_to_write.append("NA")
-            logger.info("Updating match_history")
-            self.write_values(sheet_name='match_history',write_range=["B1", f"{len(self.usernames)}"], values=[self.usernames])
-            self.write_values(sheet_name='match_history',write_range=[f"{new_row_num}", f"{len(self.usernames)+1}"], values=[values_to_write])
+            self.create_match_history(username=username)
+
+    def create_match_history(self, username=None):
+        """
+        Create an entry in the match_history sheet for the given username.
+        The user should already exist in the coin_tracker sheet.
+        """
+        #Match History Sheet - Stephen
+        logger.info("Updating match_history")
+        new_row_num = len(self.usernames)+1
+        self.write_values(sheet_name='match_history',write_range=["B1", f"{len(self.usernames)}"], values=[self.usernames])
+        horizontal_entry = ["0" if i<len(self.usernames)-1 else "NA" for i in range(len(self.usernames))]
+        horizontal_entry = [username] + horizontal_entry
+        self.write_values(sheet_name='match_history',write_range=[f"{new_row_num}", f"{new_row_num}"], values=[horizontal_entry])
+        vertical_entry = [[i] for i in horizontal_entry]
+        self.write_values(sheet_name='match_history',write_range=[f"{excel_column_name(new_row_num)}", f"{excel_column_name(new_row_num)}"], values=vertical_entry)
 
     def set_player_value(self, username=None, key=None, value=None):
         """
