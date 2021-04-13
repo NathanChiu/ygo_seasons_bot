@@ -94,6 +94,19 @@ async def setcoins(ctx, username, value):
     except Error as e:
         await ctx.send(f"Error: {e}")
 
+@bot.command()
+async def games(ctx, username, increment):
+    """Increments/decrements the games of the player."""
+    try:
+        player_info = ygos.get_player_info(username)
+        increment = int(increment)
+        games_header_string = "Games Played"
+        current_games = int(player_info[games_header_string])
+        new_games = increment + current_games
+        ygos.set_player_value(username=username, key=games_header_string, value=new_games)
+        await ctx.send(f"Changing {username}'s games from {current_games} to {new_games}")
+    except Error as e:
+        await ctx.send(f"Error: {e}")
 
 
 
