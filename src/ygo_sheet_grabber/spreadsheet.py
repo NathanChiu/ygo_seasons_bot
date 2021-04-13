@@ -95,16 +95,23 @@ class YGOSpreadsheet:
             a dictionary of player information, keyed by the sheet headers.
             e.g. {'Username': 'Alice', 'Total accumulated AFKoins': '10', 'AFKoins spent': '1'}
         """
-        headers = self.headers
-        # Get the list of usernames
-        usernames = self.usernames
-        logger.info(username)
-        if username in usernames:
-            row_num = usernames.index(username) + 2
-        player_info = self.read_values(read_range=[f"{row_num}", f"{row_num}"])
-        player_info_dict = dict(zip(headers, flatten_list(player_info)))
-        logger.info(player_info_dict)
-        return player_info_dict
+        if username is None:
+            raise ValueError(f"Must provide a username, received {username} instead.")
+        all_info = self.get_all_player_info()
+        if username not in all_info:
+            raise ValueError(f"Username {username} not found in list of players.")
+        else:
+            return all_info[username]
+        # headers = self.headers
+        # # Get the list of usernames
+        # usernames = self.usernames
+        # logger.info(username)
+        # if username in usernames:
+        #     row_num = usernames.index(username) + 2
+        # player_info = self.read_values(read_range=[f"{row_num}", f"{row_num}"])
+        # player_info_dict = dict(zip(headers, flatten_list(player_info)))
+        # logger.info(player_info_dict)
+        # return player_info_dict
 
     def create_new_player(self, username=None):
         """
@@ -225,6 +232,9 @@ class YGOSpreadsheet:
             with open(self.token_json_path, 'w') as token:
                 token.write(self.creds.to_json())
 
+    def check_player_registered(self, username=None):
+        return username in self.usernames
+
     @property
     def usernames(self):
         return self.get_usernames()
@@ -236,7 +246,6 @@ class YGOSpreadsheet:
     @property
     def all_records(self):
         return self.get_all_records()
-
 
 if __name__ == '__main__':
     # Set up logger

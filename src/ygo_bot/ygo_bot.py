@@ -17,6 +17,7 @@ async def on_ready():
     logger.info(f"Logged in username: {bot.user.name}, id: {bot.user.id}.")
     logger.info(ygos.usernames)
     logger.info(ygos.get_all_player_info())
+    logger.info(ygos.get_player_info(username="klarq#4529"))
 
 @bot.command()
 async def hello(ctx):
@@ -51,17 +52,17 @@ async def players(ctx):
     for player in player_info.values():
         key_val_strings = []
         for key, val in player.items():
-            key_val_strings.append(f"{key}: {val}")
+            if key in ['Username', 'Alias']: # Can add more header names here later.
+                key_val_strings.append(f"{key}: {val}")
         player_strings.append("\t".join(key_val_strings))
     output_string = "\n".join(player_strings)
-    # ygos.get_player_info
     await ctx.send("```"+output_string+"```")
 
 @bot.command()
 async def myinfo(ctx):
     """Shows the info of the user sending the command."""
     username = str(ctx.author)
-    logger.info(username)
+    # logger.info(username)
     player_info = ygos.get_player_info(username)
     key_val_strings = []
     for key, val in player_info.items():
