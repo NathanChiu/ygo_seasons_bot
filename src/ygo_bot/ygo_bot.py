@@ -59,16 +59,44 @@ async def players(ctx):
     await ctx.send("```"+output_string+"```")
 
 @bot.command()
-async def myinfo(ctx):
+async def duelist(ctx):
     """Shows the info of the user sending the command."""
     username = str(ctx.author)
-    # logger.info(username)
     player_info = ygos.get_player_info(username)
     key_val_strings = []
     for key, val in player_info.items():
         key_val_strings.append(f"{key}: {val}")
     output_string = "\t".join(key_val_strings)
     await ctx.send("```"+output_string+"```")
+
+@bot.command()
+async def award(ctx, username, increment):
+    """Awards coins to the username. Negative numbers allowed"""
+    try:
+        player_info = ygos.get_player_info(username)
+        coin_header_string = 'Current AFKoins'
+        current_coins = int(player_info[coin_header_string])
+        new_coins = int(increment) + current_coins
+        ygos.set_player_value(username=username, key=coin_header_string, value=new_coins)
+        await ctx.send(f"Added {increment} AFKoins to {username}'s stash. New balance: {new_coins}")
+    except Error as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def setcoins(ctx, username, value):
+    """Sets the user's coin stash to the given value."""
+    try:
+        player_info = ygos.get_player_info(username)
+        coin_header_string = 'Current AFKoins'
+        current_coins = int(player_info[coin_header_string])
+        ygos.set_player_value(username=username, key=coin_header_string, value=int(value))
+        await ctx.send(f"Changing {username}'s AFKoin stash from {current_coins} to {value}")
+    except Error as e:
+        await ctx.send(f"Error: {e}")
+
+
+
+
 
 def start_bot():
     bot.run(TOKEN)
