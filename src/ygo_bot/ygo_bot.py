@@ -3,14 +3,16 @@ from discord.ext import commands
 import logging
 import os
 from src.ygo_sheet_grabber.spreadsheet import YGOSpreadsheet
+from src.ydk_converter.ydkconverter import ydkconverter
 
 logger = logging.getLogger(__name__)
 
 TOKEN = 'ODMwMzE2ODIxODY5MzYzMjEy.YHE6zA.ynGT4tmXWWnjfxyPaJvx4DHCmsw'
 
-description = '''Bot for AFKyle's YuGiOh Seasons'''
+description = '''Bot for AFKyle's YuGiOh Seasons\nUpload your .ydk file in a PM to me to convert to a .lflist.conf file.'''
 bot = commands.Bot(command_prefix='?', description=description)
 ygos = YGOSpreadsheet(json_directory=os.path.join('src', 'ygo_sheet_grabber'))
+ydk = ydkconverter()
 
 @bot.event
 async def on_ready():
@@ -108,7 +110,26 @@ async def games(ctx, username, increment):
     except Error as e:
         await ctx.send(f"Error: {e}")
 
+@bot.event
+async def on_message(message):
+    if (len(message.attachments) == 1):
+        if (message.attachments[0].url.endswith('.ydk')): #detect ydk file
+            if (message.author.bot): #prevents bot self loop if it happens
+                return
+            else:
+                channel=message.channel 
+                #await channel.send("your file is txt")
+                await message.attachments[0].save(fp="afkseasons.ydk")
+                #await channel.send("Received")
+                ydk.convert_ydk("afkseasons")
+                # f = open("this.txt", "a")
+                # f.write("Now the file has more content!")
+                # f.close()
+                await channel.send(file=discord.File("afkseasons.lflist.conf"))
+                os.remove("afkseasons.lflist.conf")
 
+
+    await bot.process_commands(message) #allows over commands to be processed while bot listens
 
 
 def start_bot():
