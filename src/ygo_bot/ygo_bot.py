@@ -2,8 +2,12 @@ import discord
 from discord.ext import commands
 import logging
 import os
+import requests
+import urllib.parse
+import json
 from src.ygo_sheet_grabber.spreadsheet import YGOSpreadsheet
-from src.ydk_converter.ydkconverter import ydkconverter
+from src.ydk_converter.ydkconverter import convert_ydk
+
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +16,6 @@ TOKEN = 'ODMwMzE2ODIxODY5MzYzMjEy.YHE6zA.ynGT4tmXWWnjfxyPaJvx4DHCmsw'
 description = '''Bot for AFKyle's YuGiOh Seasons\nUpload your .ydk file in a PM to me to convert to a .lflist.conf file.'''
 bot = commands.Bot(command_prefix='?', description=description)
 ygos = YGOSpreadsheet(json_directory=os.path.join('src', 'ygo_sheet_grabber'))
-ydk = ydkconverter()
 
 @bot.event
 async def on_ready():
@@ -81,7 +84,7 @@ async def award(ctx, username, increment):
         new_coins = int(increment) + current_coins
         ygos.set_player_value(username=username, key=coin_header_string, value=new_coins)
         await ctx.send(f"Added {increment} AFKoins to {username}'s stash. New balance: {new_coins}")
-    except Error as e:
+    except Exception as e:
         await ctx.send(f"Error: {e}")
 
 @bot.command()
@@ -93,7 +96,7 @@ async def setcoins(ctx, username, value):
         current_coins = int(player_info[coin_header_string])
         ygos.set_player_value(username=username, key=coin_header_string, value=int(value))
         await ctx.send(f"Changing {username}'s AFKoin stash from {current_coins} to {value}")
-    except Error as e:
+    except Exception as e:
         await ctx.send(f"Error: {e}")
 
 @bot.command()
@@ -107,7 +110,55 @@ async def games(ctx, username, increment):
         new_games = increment + current_games
         ygos.set_player_value(username=username, key=games_header_string, value=new_games)
         await ctx.send(f"Changing {username}'s games from {current_games} to {new_games}")
-    except Error as e:
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def alias(ctx, _alias):
+    """Sets your alias!"""
+    try:
+        username = str(ctx.author)
+        ygos.check_player_registered(username)
+        ygos.set_player_value(username=username, key="Alias", value=_alias)
+        await ctx.send(f"Alias for {username} successfully changed to {_alias}")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def setsignaturecard(ctx, *args):
+    """Set your signature card!"""
+    try:
+        username = str(ctx.author)
+        sig_card_name = " ".join(args[:])
+        ygos.check_player_registered(username)
+        sig_card_name_encoded = urllib.parse.quote_plus(sig_card_name)
+        requested_card = requests.get(f"https://db.ygoprodeck.com/api/v7/cardinfo.php?name={sig_card_name_encoded}")
+        if requested_card.status_code != 200:
+            await ctx.send(f"Could not find your card on YGOPro. Please make sure your card is spelt correctly.")
+        else:
+            ygos.set_player_value(username=username, key="Signature Card", value=sig_card_name)
+            await ctx.send(f"Signature card successfully set to {sig_card_name}")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def showsignaturecard(ctx):
+    """Show off your signature card!"""
+    try:
+        username = str(ctx.author)
+        ygos.check_player_registered(username)
+        player_info = ygos.get_player_info(username)
+        sig_card_name = player_info["Signature Card"]
+        sig_card_name_encoded = urllib.parse.quote_plus(sig_card_name)
+        requested_card = requests.get(f"https://db.ygoprodeck.com/api/v7/cardinfo.php?name={sig_card_name_encoded}")
+        if requested_card.status_code != 200:
+            await ctx.send(f"Could not find your card on YGOPro. Please make sure your signature card is set.")
+        else:
+            # Get the image_url
+            card_info = json.loads(requested_card.text)
+            image_url = card_info["data"][0]["card_images"][-1]["image_url"]
+            await ctx.send(f"{image_url}")
+    except Exception as e:
         await ctx.send(f"Error: {e}")
 
 @bot.event
@@ -117,11 +168,11 @@ async def on_message(message):
             if (message.author.bot): #prevents bot self loop if it happens
                 return
             else:
-                channel=message.channel 
+                channel=message.channel
                 #await channel.send("your file is txt")
                 await message.attachments[0].save(fp="afkseasons.ydk")
                 #await channel.send("Received")
-                ydk.convert_ydk("afkseasons")
+                convert_ydk("afkseasons")
                 # f = open("this.txt", "a")
                 # f.write("Now the file has more content!")
                 # f.close()
