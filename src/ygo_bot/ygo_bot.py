@@ -50,7 +50,7 @@ async def register(ctx, alias=None):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def players(ctx):
+async def duelists(ctx):
     """Shows a list of registered players and their information"""
     player_info = ygos.get_all_player_info()
     player_strings = []
@@ -75,7 +75,7 @@ async def duelist(ctx):
     await ctx.send("```"+output_string+"```")
 
 @bot.command()
-async def award(ctx, username, increment):
+async def addcoins(ctx, username, increment):
     """Awards coins to the username. Negative numbers allowed"""
     try:
         new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
@@ -83,6 +83,18 @@ async def award(ctx, username, increment):
                                               key="Current AFKoins",
                                               value=increment)
         await ctx.send(f"Added {increment} AFKoins to {username}'s stash. New balance: {new_coins}")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def addcoins(ctx, username, increment):
+    """Adds games to the username. Negative numbers allowed"""
+    try:
+        new_games = ygos.increment_user_value(sheet_name="coin_tracker",
+                                              username=username,
+                                              key="Games Played",
+                                              value=increment)
+        await ctx.send(f"Added {increment} AFKoins to {username}'s games. New games balance: {new_games}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
 
@@ -145,7 +157,7 @@ async def coins(ctx, username, value):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def alias(ctx, _alias):
+async def setalias(ctx, _alias):
     """Sets your alias!"""
     try:
         username = str(ctx.author)
@@ -156,7 +168,7 @@ async def alias(ctx, _alias):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def setsignaturecard(ctx, *args):
+async def setcard(ctx, *args):
     """Set your signature card!"""
     try:
         username = str(ctx.author)
@@ -173,7 +185,7 @@ async def setsignaturecard(ctx, *args):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def showsignaturecard(ctx):
+async def showcard(ctx):
     """Show off your signature card!"""
     try:
         username = str(ctx.author)
