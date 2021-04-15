@@ -82,6 +82,14 @@ class YGOSpreadsheet:
         # Only show through all
         return flatten_list(usernames)[1:]
 
+    def get_tournaments(self):
+        """
+        Returns a list of number of tournaments.
+        """
+        tournaments = self.read_values(sheet_name="tournaments",read_range=["A", "A"])
+        # Only show through all
+        return flatten_list(tournaments)[1:]
+
     def get_headers(self, sheet_name="coin_tracker"):
         headers = self.read_values(sheet_name=sheet_name, read_range=["1", "1"])
         return flatten_list(headers)
@@ -138,6 +146,21 @@ class YGOSpreadsheet:
         self.write_values(sheet_name='match_history',write_range=[f"{new_row_num}", f"{new_row_num}"], values=[horizontal_entry])
         vertical_entry = [[i] for i in horizontal_entry]
         self.write_values(sheet_name='match_history',write_range=[f"{excel_column_name(new_row_num)}", f"{excel_column_name(new_row_num)}"], values=vertical_entry)
+
+    def create_tournament(self, name=None):
+        """
+        Creates a new tournament. Optional input for tournament name.
+            name : string of the tournament name to create a new entry for.
+        """
+        # Tournament IDs are numbered, also not expecting to have to write more than 1 number.
+        values_to_write = [len(self.tournaments)+1]
+        for i in range(len(self.tournament_headers)-1):
+            values_to_write.append("0")
+        logger.info("Updating tournaments")
+        new_row_num = len(self.tournaments)+2
+        self.write_values(sheet_name='tournaments',write_range=[f"{new_row_num}", f"{new_row_num}"], values=[values_to_write])
+        if name!=None:
+           print("Please add tournament naming function to ?tournament")
 
     # def set_player_value(self, username=None, key=None, value=None, sheet=None):
     #     """
@@ -249,11 +272,21 @@ class YGOSpreadsheet:
         return self.get_usernames()
 
     @property
+    def tournaments(self):
+        return self.get_tournaments()
+
+    @property
     def coin_tracker_headers(self):
         return self.get_headers(sheet_name="coin_tracker")
 
+    @property
     def match_history_headers(self):
         return self.get_headers(sheet_name="match_history")
+    
+    @property
+    def tournament_headers(self):
+        return self.get_headers(sheet_name="tournaments")
+
 
     @property
     def all_records(self):

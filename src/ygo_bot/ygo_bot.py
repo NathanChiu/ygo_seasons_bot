@@ -50,6 +50,18 @@ async def register(ctx, alias=None):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
+async def tournament(ctx, tname=None):
+    """Creates a new tournament. Tournament name optional."""
+    try:
+        ygos.create_tournament(tname)
+        if tname == None:
+            await ctx.send(f"New Unnamed Tournament Created.")
+        else:
+            await ctx.send(f"New Tournament created: {tname}.")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
 async def duelists(ctx):
     """Shows a list of registered players and their information"""
     player_info = ygos.get_all_player_info()
@@ -237,9 +249,8 @@ async def on_message(message):
                 # f.write("Now the file has more content!")
                 # f.close()
                 await channel.send(file=discord.File("afkseasons.lflist.conf"))
+                os.remove("afkseasons.ydk")
                 os.remove("afkseasons.lflist.conf")
-
-
     await bot.process_commands(message) #allows over commands to be processed while bot listens
 
 
