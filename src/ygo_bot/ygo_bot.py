@@ -75,8 +75,10 @@ async def duelist(ctx):
     await ctx.send("```"+output_string+"```")
 
 @bot.command()
-async def addcoins(ctx, username, increment):
+async def addcoins(ctx, increment, username=None):
     """Awards coins to the username. Negative numbers allowed"""
+    if username is None:
+        username = str(ctx.author)
     try:
         new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
                                               username=username,
@@ -87,7 +89,22 @@ async def addcoins(ctx, username, increment):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def addcoins(ctx, username, increment):
+async def spendcoins(ctx, increment, username=None):
+    """Awards coins to the username. Negative numbers allowed"""
+    if username is None:
+        username = str(ctx.author)
+    try:
+        new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
+                                              username=username,
+                                              key="Current AFKoins",
+                                              value=-int(increment))
+        await ctx.send(f"{username} spent {increment} coin(s)! New balance: {new_coins}")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+
+@bot.command()
+async def addgames(ctx, username, increment):
     """Adds games to the username. Negative numbers allowed"""
     try:
         new_games = ygos.increment_user_value(sheet_name="coin_tracker",
