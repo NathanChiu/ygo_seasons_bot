@@ -7,7 +7,7 @@ import urllib.parse
 import json
 from src.ygo_sheet_grabber.spreadsheet import YGOSpreadsheet
 from src.ydk_converter.ydkconverter import convert_ydk
-
+from src.ygo_bot.bot_params import Rewards
 
 logger = logging.getLogger(__name__)
 
@@ -24,17 +24,17 @@ async def on_ready():
     logger.info(ygos.get_all_player_info())
     logger.info(ygos.get_player_info(username="klarq#4529"))
 
-@bot.command()
-async def hello(ctx):
-    """Says world"""
-    logger.info(dir(ctx))
-    logger.info(f"{ctx.author}: {ctx.command}")
-    await ctx.send("world")
+# @bot.command()
+# async def hello(ctx):
+#     """Says world"""
+#     logger.info(dir(ctx))
+#     logger.info(f"{ctx.author}: {ctx.command}")
+#     await ctx.send("world")
 
-@bot.command()
-async def add(ctx, left : int, right : int):
-    """Adds two numbers together."""
-    await ctx.send(left + right)
+# @bot.command()
+# async def add(ctx, left : int, right : int):
+#     """Adds two numbers together."""
+#     await ctx.send(left + right)
 
 @bot.command()
 async def register(ctx, alias=None):
@@ -44,7 +44,7 @@ async def register(ctx, alias=None):
         alias = username
     try:
         ygos.create_new_player(username=username)
-        ygos.set_player_value(username=username, key="Alias", value=alias)
+        ygos.set_user_value(username=username, key="Alias", value=alias)
         await ctx.send(f"Successfully created player {username} with alias {alias}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
@@ -67,7 +67,7 @@ async def players(ctx):
 async def duelist(ctx):
     """Shows the info of the user sending the command."""
     username = str(ctx.author)
-    player_info = ygos.get_player_info(username)
+    player_info = ygos.get_player_info(username=username)
     key_val_strings = []
     for key, val in player_info.items():
         key_val_strings.append(f"{key}: {val}")
@@ -78,38 +78,69 @@ async def duelist(ctx):
 async def award(ctx, username, increment):
     """Awards coins to the username. Negative numbers allowed"""
     try:
-        player_info = ygos.get_player_info(username)
-        coin_header_string = 'Current AFKoins'
-        current_coins = int(player_info[coin_header_string])
-        new_coins = int(increment) + current_coins
-        ygos.set_player_value(username=username, key=coin_header_string, value=new_coins)
+        new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
+                                              username=username,
+                                              key="Current AFKoins",
+                                              value=increment)
         await ctx.send(f"Added {increment} AFKoins to {username}'s stash. New balance: {new_coins}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def setcoins(ctx, username, value):
-    """Sets the user's coin stash to the given value."""
+async def win(ctx):
+    """Increments the games and coins of the player from a win."""
     try:
-        player_info = ygos.get_player_info(username)
-        coin_header_string = 'Current AFKoins'
-        current_coins = int(player_info[coin_header_string])
-        ygos.set_player_value(username=username, key=coin_header_string, value=int(value))
-        await ctx.send(f"Changing {username}'s AFKoin stash from {current_coins} to {value}")
+        username = str(ctx.author)
+        new_games = ygos.increment_user_value(sheet_name="coin_tracker",
+                                              username=username,
+                                              key="Games Played",
+                                              value=1)
+        new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
+                                              username=username,
+                                              key="Current AFKoins",
+                                              value=Rewards.Win)
+        await ctx.send(f"Win recorded for {username}. Total games: {new_games}, total coins: {new_coins}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def games(ctx, username, increment):
-    """Increments/decrements the games of the player."""
+async def lose(ctx):
+    """Increments the games and coins of the player from a loss."""
     try:
-        player_info = ygos.get_player_info(username)
-        increment = int(increment)
-        games_header_string = "Games Played"
-        current_games = int(player_info[games_header_string])
-        new_games = increment + current_games
-        ygos.set_player_value(username=username, key=games_header_string, value=new_games)
-        await ctx.send(f"Changing {username}'s games from {current_games} to {new_games}")
+        username = str(ctx.author)
+        new_games = ygos.increment_user_value(sheet_name="coin_tracker",
+                                              username=username,
+                                              key="Games Played",
+                                              value=1)
+        new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
+                                              username=username,
+                                              key="Current AFKoins",
+                                              value=Rewards.Lose)
+        await ctx.send(f"Loss recorded for {username}. Total games: {new_games}, total coins: {new_coins}")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def games(ctx, username, new_val):
+    """Sets the games of the player."""
+    try:
+        ygos.set_user_value(sheet_name="coin_tracker",
+                            username=username,
+                            key="Games Played",
+                            value=new_val)
+        await ctx.send(f"Changing {username}'s games to {new_val}")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def coins(ctx, username, value):
+    """Sets the user's coin stash to the given value."""
+    try:
+        ygos.set_user_value(sheet_name="coin_tracker",
+                            username=username,
+                            key="Current AFKoins",
+                            value=new_val)
+        await ctx.send(f"Changing {username}'s AFKoin stash from {current_coins} to {value}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
 
@@ -119,7 +150,7 @@ async def alias(ctx, _alias):
     try:
         username = str(ctx.author)
         ygos.check_player_registered(username)
-        ygos.set_player_value(username=username, key="Alias", value=_alias)
+        ygos.set_user_value(username=username, key="Alias", value=_alias)
         await ctx.send(f"Alias for {username} successfully changed to {_alias}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
@@ -136,7 +167,7 @@ async def setsignaturecard(ctx, *args):
         if requested_card.status_code != 200:
             await ctx.send(f"Could not find your card on YGOPro. Please make sure your card is spelt correctly.")
         else:
-            ygos.set_player_value(username=username, key="Signature Card", value=sig_card_name)
+            ygos.set_user_value(username=username, key="Signature Card", value=sig_card_name)
             await ctx.send(f"Signature card successfully set to {sig_card_name}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
@@ -147,7 +178,7 @@ async def showsignaturecard(ctx):
     try:
         username = str(ctx.author)
         ygos.check_player_registered(username)
-        player_info = ygos.get_player_info(username)
+        player_info = ygos.get_player_info(username=username)
         sig_card_name = player_info["Signature Card"]
         sig_card_name_encoded = urllib.parse.quote_plus(sig_card_name)
         requested_card = requests.get(f"https://db.ygoprodeck.com/api/v7/cardinfo.php?name={sig_card_name_encoded}")

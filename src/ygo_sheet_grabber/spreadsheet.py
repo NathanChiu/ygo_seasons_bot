@@ -55,19 +55,19 @@ class YGOSpreadsheet:
         logger.info("YGOSpreadsheet initiated.")
         logger.info(f"Current records: {self.get_all_records()}")
 
-    def get_all_records(self):
+    def get_all_records(self, sheet_name="coin_tracker"):
         """
         Get a list with all the records.
         This also serves to update the self.max_row and self.max_column attributes.
         """
         # Read some large number of records, to make sure we capture all the data.
-        values =  self.read_values(read_range=["A", "Z"])
+        values =  self.read_values(sheet_name=sheet_name, read_range=["A", "Z"])
         return values
 
-    def get_all_player_info(self):
-        all_records = self.get_all_records()
+    def get_all_player_info(self, sheet_name="coin_tracker"):
+        all_records = self.get_all_records(sheet_name=sheet_name)
         all_records.pop(0)
-        headers = self.headers
+        headers = self.coin_tracker_headers
         player_info_dicts = {}
         for record in all_records:
             name = record[0]
@@ -82,11 +82,11 @@ class YGOSpreadsheet:
         # Only show through all
         return flatten_list(usernames)[1:]
 
-    def get_headers(self):
-        headers = self.read_values(read_range=["1", "1"])
+    def get_headers(self, sheet_name="coin_tracker"):
+        headers = self.read_values(sheet_name=sheet_name, read_range=["1", "1"])
         return flatten_list(headers)
 
-    def get_player_info(self, username=None):
+    def get_player_info(self, sheet_name="coin_tracker", username=None):
         """
         Reads the info of a player given a usename.
         params:
@@ -97,21 +97,11 @@ class YGOSpreadsheet:
         """
         if username is None:
             raise ValueError(f"Must provide a username, received {username} instead.")
-        all_info = self.get_all_player_info()
+        all_info = self.get_all_player_info(sheet_name=sheet_name)
         if username not in all_info:
             raise ValueError(f"Username {username} not found in list of players.")
         else:
             return all_info[username]
-        # headers = self.headers
-        # # Get the list of usernames
-        # usernames = self.usernames
-        # logger.info(username)
-        # if username in usernames:
-        #     row_num = usernames.index(username) + 2
-        # player_info = self.read_values(read_range=[f"{row_num}", f"{row_num}"])
-        # player_info_dict = dict(zip(headers, flatten_list(player_info)))
-        # logger.info(player_info_dict)
-        # return player_info_dict
 
     def create_new_player(self, username=None):
         """
@@ -126,7 +116,7 @@ class YGOSpreadsheet:
             # Create a new entry at the bottom of the list.
             # if N users exist, new entry should go in row N+2.
             values_to_write = [username]
-            for i in range(len(self.headers)-1):
+            for i in range(len(self.coin_tracker_headers)-1):
                 values_to_write.append("0")
             #logger.info(f"{values_to_write}")
             logger.info("Updating coin_tracker")
@@ -149,24 +139,24 @@ class YGOSpreadsheet:
         vertical_entry = [[i] for i in horizontal_entry]
         self.write_values(sheet_name='match_history',write_range=[f"{excel_column_name(new_row_num)}", f"{excel_column_name(new_row_num)}"], values=vertical_entry)
 
-    def set_player_value(self, username=None, key=None, value=None):
-        """
-        Sets an attribute for a player to a certain value.
-        params:
-            username : string of the player name to alter the record of.
-            key : The header entry of the attribute to change.
-        """
-        if username in self.usernames:
-            if key is None or value is None:
-                raise ValueError(f"Need a key value pair, got key: {key}, value: {value}.")
-            elif key in self.headers:
-                row_num = self.usernames.index(username) + 2
-                col_num = self.headers.index(key) + 1
-                col_char = excel_column_name(col_num)
-                cell_name = f"{col_char}{row_num}"
-                self.write_values(write_range=[f"{cell_name}", f"{cell_name}"], values=[[value]])
-        else:
-            raise ValueError(f"Username '{username}' does not exist.")
+    # def set_player_value(self, username=None, key=None, value=None, sheet=None):
+    #     """
+    #     Sets an attribute for a player to a certain value.
+    #     params:
+    #         username : string of the player name to alter the record of.
+    #         key : The header entry of the attribute to change.
+    #     """
+    #     if username in self.usernames:
+    #         if key is None or value is None:
+    #             raise ValueError(f"Need a key value pair, got key: {key}, value: {value}.")
+    #         elif key in self.coin_tracker_headers:
+    #             row_num = self.usernames.index(username) + 2
+    #             col_num = self.coin_tracker_headers.index(key) + 1
+    #             col_char = excel_column_name(col_num)
+    #             cell_name = f"{col_char}{row_num}"
+    #             self.write_values(write_range=[f"{cell_name}", f"{cell_name}"], values=[[value]])
+    #     else:
+    #         raise ValueError(f"Username '{username}' does not exist.")
 
     def read_values(self, sheet_name='coin_tracker', read_range=['A1', 'A1']):
         """
@@ -232,6 +222,25 @@ class YGOSpreadsheet:
             with open(self.token_json_path, 'w') as token:
                 token.write(self.creds.to_json())
 
+    def increment_user_value(self, sheet_name="coin_tracker", username=None, key=None, value=None):
+        player_info = self.get_player_info(sheet_name=sheet_name, username=username)
+        current_value = int(player_info[key])
+        new_value = int(value) + current_value
+        self.set_user_value(username=username, key=key, value=new_value)
+        return new_value
+
+    def set_user_value(self, sheet_name="coin_tracker", username=None, key=None, value=None):
+        player_info = self.get_player_info(sheet_name=sheet_name, username=username)
+        if key is None or value is None:
+            raise ValueError(f"Need a key value pair, got key: {key}, value: {value}.")
+        headers = self.get_headers(sheet_name=sheet_name)
+        if key in headers:
+            row_num = self.usernames.index(username) + 2
+            col_num = headers.index(key) + 1
+            col_char = excel_column_name(col_num)
+            cell_name = f"{col_char}{row_num}"
+            self.write_values(sheet_name=sheet_name, write_range=[f"{cell_name}", f"{cell_name}"], values=[[value]])
+
     def check_player_registered(self, username=None):
         return username in self.usernames
 
@@ -240,8 +249,11 @@ class YGOSpreadsheet:
         return self.get_usernames()
 
     @property
-    def headers(self):
-        return self.get_headers()
+    def coin_tracker_headers(self):
+        return self.get_headers(sheet_name="coin_tracker")
+
+    def match_history_headers(self):
+        return self.get_headers(sheet_name="match_history")
 
     @property
     def all_records(self):
@@ -262,5 +274,5 @@ if __name__ == '__main__':
     # ygos.write_values(write_range=["A6", "E"], values=values)
     # ygos.get_player_info("Alice")
     # ygos.create_new_player("Fred")
-    ygos.set_player_value(username="Fred", key="Current AFKoins", value="5")
+    ygos.set_user_value(username="Fred", key="Current AFKoins", value="5")
     # print(ygos.sheet.get_all_records())
