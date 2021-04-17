@@ -13,7 +13,14 @@ logger = logging.getLogger(__name__)
 
 TOKEN = 'ODMwMzE2ODIxODY5MzYzMjEy.YHE6zA.ynGT4tmXWWnjfxyPaJvx4DHCmsw'
 
-description = '''Bot for AFKyle's YuGiOh Seasons\nUpload your .ydk file in a PM to me to convert to a .lflist.conf file.'''
+description = '''Bot for AFKyle's YuGiOh Seasons\n
+                 Features: \n
+                 \tFile conversion:
+                 \t\tUpload your .ydk file in a PM to me to convert to a .lflist.conf file.\n
+                 \tCommands:
+                 \t\tType ?[command] to issue a command. Try the 'help' command to get a list of available commands.
+                 \t\tCommand arguments are presented in their help strings. Arguments should be space separated. (*) denotes optional arguments.
+              '''
 bot = commands.Bot(command_prefix='?', description=description)
 ygos = YGOSpreadsheet(json_directory=os.path.join('src', 'ygo_sheet_grabber'))
 
@@ -21,8 +28,9 @@ ygos = YGOSpreadsheet(json_directory=os.path.join('src', 'ygo_sheet_grabber'))
 async def on_ready():
     logger.info(f"Logged in username: {bot.user.name}, id: {bot.user.id}.")
     logger.info(ygos.usernames)
-    logger.info(ygos.get_all_player_info())
+    # logger.info(ygos.get_all_player_info())
     logger.info(ygos.get_player_info(username="klarq#4529"))
+    logger.info(ygos.get_player_info(username="klarq#4529", sheet_name="match_history"))
 
 # @bot.command()
 # async def hello(ctx):
@@ -38,7 +46,7 @@ async def on_ready():
 
 @bot.command()
 async def register(ctx, alias=None):
-    """Creates an entry for a new user, with option for an alias."""
+    """(*alias) Creates an entry for a new user, with option for an alias."""
     username = str(ctx.author)
     if alias is None:
         alias = username
@@ -51,10 +59,10 @@ async def register(ctx, alias=None):
 
 @bot.command()
 async def tournament(ctx, tname=None):
-    """Creates a new tournament. Tournament name optional."""
+    """(*tournamentname) Creates a new tournament. Tournament name optional."""
     try:
         ygos.create_tournament(tname)
-        if tname == None:
+        if tname is None:
             await ctx.send(f"New Unnamed Tournament Created.")
         else:
             await ctx.send(f"New Tournament created: {tname}.")
@@ -62,9 +70,37 @@ async def tournament(ctx, tname=None):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
+async def settournamentwinner(ctx, id, winner):
+    """(id, winner) Sets the winner of a tournament."""
+    try:
+        tournaments = ygos.get_all_record_dict(sheet_name="tournaments")
+        if ygos.check_player_registered(winner) and str(id) in tournaments:
+            ygos.set_record_value(sheet_name="tournaments", \
+                                  id=str(id), \
+                                  key="Champion", \
+                                  value=winner)
+        await ctx.send(f"{winner} has been crowned the winner of tournament #{id}!")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def settournamentname(ctx, id, name):
+    """(id, name) Sets the name of a tournament."""
+    try:
+        tournaments = ygos.get_all_record_dict(sheet_name="tournaments")
+        if str(id) in tournaments:
+            ygos.set_record_value(sheet_name="tournaments", \
+                                  id=str(id), \
+                                  key="Tournament", \
+                                  value=name)
+        await ctx.send(f"{winner} has been crowned the winner of tournament #{id}!")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
 async def duelists(ctx):
     """Shows a list of registered players and their information"""
-    player_info = ygos.get_all_player_info()
+    player_info = ygos.get_all_record_dict()
     player_strings = []
     for player in player_info.values():
         key_val_strings = []
@@ -76,19 +112,30 @@ async def duelists(ctx):
     await ctx.send("```"+output_string+"```")
 
 @bot.command()
-async def duelist(ctx):
-    """Shows the info of the user sending the command."""
-    username = str(ctx.author)
-    player_info = ygos.get_player_info(username=username)
+async def duelist(ctx, username=None):
+    """(*username) Shows the info of a given user, including stats!."""
+    if username is None:
+        username = str(ctx.author)
     key_val_strings = []
-    for key, val in player_info.items():
-        key_val_strings.append(f"{key}: {val}")
-    output_string = "\t".join(key_val_strings)
+    player_info = ygos.get_player_info(username=username)
+    key_val_strings.append(f"'Username': {player_info['Username']}")
+    key_val_strings.append(f"'Alias': {player_info['Alias']}")
+    key_val_strings.append(f"'Signature Card': {player_info['Signature Card']}")
+    num_games = int(player_info["Games Played"])
+    player_info = ygos.get_player_info(sheet_name="match_history", username=username)
+    num_wins = 0
+    for wins in player_info.values():
+        if wins.isdigit():
+            num_wins += int(wins)
+    key_val_strings.append(f"'Win rate (total games)': {num_wins/num_games:.2f}({num_games})")
+    tourns = ygos.tournaments_won(username)
+    key_val_strings.append(f"'Tournaments won': {len(tourns)}")
+    output_string = "\n".join(key_val_strings)
     await ctx.send("```"+output_string+"```")
 
 @bot.command()
 async def addcoins(ctx, increment, username=None):
-    """Awards coins to the username. Negative numbers allowed"""
+    """(increment, *username) Awards coins to the username. Negative numbers allowed"""
     if username is None:
         username = str(ctx.author)
     try:
@@ -102,7 +149,7 @@ async def addcoins(ctx, increment, username=None):
 
 @bot.command()
 async def spendcoins(ctx, increment, username=None):
-    """Awards coins to the username. Negative numbers allowed"""
+    """(amount, *username) Awards coins to the username. Negative numbers allowed"""
     if username is None:
         username = str(ctx.author)
     try:
@@ -116,8 +163,10 @@ async def spendcoins(ctx, increment, username=None):
 
 
 @bot.command()
-async def addgames(ctx, username, increment):
-    """Adds games to the username. Negative numbers allowed"""
+async def addgames(ctx, increment, username):
+    """(increment, *username) Adds games to the username. Negative numbers allowed"""
+    if username is None:
+        username = str(ctx.author)
     try:
         new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                               username=username,
@@ -163,7 +212,7 @@ async def lose(ctx):
 
 @bot.command()
 async def setgames(ctx, value=None, username=None):
-    """Sets the games of the player."""
+    """(value, *username) Sets the games of the player."""
     try:
         if username is None:
             _username = str(ctx.author)
@@ -177,7 +226,7 @@ async def setgames(ctx, value=None, username=None):
 
 @bot.command()
 async def setcoins(ctx, value=None, username=None):
-    """Sets the user's coin stash to the given value."""
+    """(value, *username) Sets the user's coin stash to the given value."""
     try:
         if username is None:
             _username = str(ctx.author)
@@ -191,7 +240,7 @@ async def setcoins(ctx, value=None, username=None):
 
 @bot.command()
 async def setalias(ctx, _alias):
-    """Sets your alias!"""
+    """(alias) Sets your alias!"""
     try:
         username = str(ctx.author)
         ygos.check_player_registered(username)
@@ -202,7 +251,7 @@ async def setalias(ctx, _alias):
 
 @bot.command()
 async def setcard(ctx, *args):
-    """Set your signature card!"""
+    """(exactcardspelling)Set your signature card!"""
     try:
         username = str(ctx.author)
         sig_card_name = " ".join(args[:])
@@ -216,6 +265,79 @@ async def setcard(ctx, *args):
             await ctx.send(f"Signature card successfully set to {sig_card_name}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def winvs(ctx, loser=None, num_wins=1):
+    """(opponent, *numwins) Record a win against a player. Can specify number of wins after the opponent's name."""
+    try:
+        winner = str(ctx.author)
+        if not ygos.check_player_registered(loser) or \
+                    not ygos.check_player_registered(winner):
+            raise ValueError(f"Either {winner} or {loser} is not a registered player.")
+        # Winner
+        ygos.increment_user_value(sheet_name="coin_tracker",
+                                  username=winner,
+                                  key=["Games Played", "Current AFKoins"],
+                                  value=[num_wins, Rewards.Win*num_wins])
+        # ygos.increment_user_value(sheet_name="coin_tracker",
+        #                           username=winner,
+        #                           key="Current AFKoins",
+        #                           value=Rewards.Win*num_wins)
+
+        # Loser
+        ygos.increment_user_value(sheet_name="coin_tracker",
+                                  username=loser,
+                                  key=["Games Played", "Current AFKoins"],
+                                  value=[num_wins, Rewards.Lose*num_wins])
+        # ygos.increment_user_value(sheet_name="coin_tracker",
+        #                           username=loser,
+        #                           key="Current AFKoins",
+        #                           value=Rewards.Lose*num_wins)
+
+        # Set the match history sheet.
+        ygos.increment_user_value(sheet_name="match_history",
+                                  username=winner,
+                                  key=loser,
+                                  value=num_wins)
+        await ctx.send(f"Hark! {winner} has achieved {num_wins} win(s) against {loser}!")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def archenemies(ctx):
+    """Shows your archenemies (most wins and most losses)"""
+    try:
+        username = str(ctx.author)
+        players_info = ygos.get_all_record_dict(sheet_name="match_history")
+        min_name = ""
+        min_wins = 0
+        for name, info in players_info.items():
+            # del info["Wins against ->"]
+            logger.info(info)
+            if name == username:
+                # player_info = ygos.get_player_info(sheet_name="match_history", username=username)
+                player_info = {k:int(v) for k,v in info.items() if v.isdigit()}
+                max_key = max(player_info, key=lambda k: player_info[k])
+                max_wins = player_info[max_key]
+            else:
+                if int(info[username]) > min_wins:
+                    min_name = name
+                    min_wins = int(info[username])
+        await ctx.send(f"Most wins against {max_key} ({max_wins}), most losses against {min_name} ({min_wins}).")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
+@bot.command()
+async def recordvs(ctx, opponent):
+    """(opponent) Shows your record against an opponent."""
+    try:
+        username = str(ctx.author)
+        player_info = ygos.get_player_info(sheet_name="match_history", username=username)
+        opponent_info = ygos.get_player_info(sheet_name="match_history", username=opponent)
+        await ctx.send(f"Record vs {opponent}: {player_info[opponent]} wins, {opponent_info[username]} losses.")
+    except Exception as e:
+        await ctx.send(f"Error: {e}")
+
 
 @bot.command()
 async def showcard(ctx):
@@ -237,6 +359,8 @@ async def showcard(ctx):
     except Exception as e:
         await ctx.send(f"Error: {e}")
 
+
+
 @bot.event
 async def on_message(message):
     if (len(message.attachments) == 1):
@@ -256,6 +380,7 @@ async def on_message(message):
                 os.remove("afkseasons.ydk")
                 os.remove("afkseasons.lflist.conf")
     await bot.process_commands(message) #allows over commands to be processed while bot listens
+
 
 
 def start_bot():
