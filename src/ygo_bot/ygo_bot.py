@@ -109,13 +109,15 @@ class Admin(commands.Cog):
         self.bot = b
 
     @commands.command()
-    async def setgames(self, ctx, value=None, username=None):
+    async def setgames(self, ctx, value=None, username: discord.Member=None):
         """(value, *username) Sets the games of the player."""
         try:
             if username is None:
                 _username = str(ctx.author)
-            elif ctx.guild.get_member_named(username) is not None:
-                username = str(ctx.guild.get_member_named(username))
+            else:
+                _username = str(username) or str(ctx.guild.get_member_named(username))
+            # elif ctx.guild.get_member_named(username) is not None:
+            #     username = str(ctx.guild.get_member_named(username))
             ygos.set_record_value(sheet_name="coin_tracker",
                                 id=_username,
                                 key="Games Played",
@@ -125,27 +127,28 @@ class Admin(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def setcoins(self, ctx, value=None, username=None):
+    async def setcoins(self, ctx, value=None, username: discord.Member=None):
         """(value, *username) Sets the user's coin stash to the given value."""
         try:
             if username is None:
                 _username = str(ctx.author)
-            elif ctx.guild.get_member_named(username) is not None:
-                username = str(ctx.guild.get_member_named(username))
+            else:
+                _username = str(username) or str(ctx.guild.get_member_named(username))
+            # elif ctx.guild.get_member_named(username) is not None:
+            #     username = str(ctx.guild.get_member_named(username))
             ygos.set_record_value(sheet_name="coin_tracker",
-                                id=username,
+                                id=_username,
                                 key="Current AFKoins",
-                                value=new_val)
+                                value=value)
             await ctx.send(f"Changing {username}'s AFKoin stash from {current_coins} to {value}")
         except Exception as e:
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def settournamentwinner(self, ctx, id, winner):
+    async def settournamentwinner(self, ctx, id, winner:discord.Member):
         """(id, winner) Sets the winner of a tournament."""
         try:
-            if ctx.guild.get_member_named(winner) is not None:
-                winner = str(ctx.guild.get_member_named(winner))
+            winner = str(winner) or str(ctx.guild.get_member_named(winner))
             tournaments = ygos.get_all_record_dict(sheet_name="tournaments")
             if ygos.check_player_registered(winner) and str(id) in tournaments:
                 ygos.set_record_value(sheet_name="tournaments", \
@@ -183,12 +186,14 @@ class Admin(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def addcoins(self, ctx, increment, username=None):
+    async def addcoins(self, ctx, increment, username: discord.Member=None):
         """(increment, *username) Awards coins to the username. Negative numbers allowed"""
         if username is None:
             username = str(ctx.author)
-        elif ctx.guild.get_member_named(username) is not None:
-            username = str(ctx.guild.get_member_named(username))
+        else:
+            username = str(username) or str(ctx.guild.get_member_named(username))
+        #elif ctx.guild.get_member_named(username) is not None:
+        #    username =  str(ctx.guild.get_member_named(username))
         try:
             new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
@@ -199,13 +204,15 @@ class Admin(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def win(self, ctx, num=1, username=None):
+    async def win(self, ctx, num=1, username: discord.Member=None):
         """(increment, *username) Increments the games and coins of the player from a win."""
         try:
             if username is None:
                 username = str(ctx.author)
-            elif ctx.guild.get_member_named(username) is not None:
-                username = str(ctx.guild.get_member_named(username))
+            else:
+                username = str(username) or str(ctx.guild.get_member_named(username))
+            # elif ctx.guild.get_member_named(username) is not None:
+            #     username = str(ctx.guild.get_member_named(username))
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
                                                   key="Games Played",
@@ -219,13 +226,15 @@ class Admin(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def lose(self, ctx, num=1, username=None):
+    async def lose(self, ctx, num=1, username: discord.Member=None):
         """Increments the games and coins of the player from a loss."""
         try:
             if username is None:
                 username = str(ctx.author)
-            elif ctx.guild.get_member_named(username) is not None:
-                username = str(ctx.guild.get_member_named(username))
+            else:
+                username = str(username) or str(ctx.guild.get_member_named(username))
+            # elif ctx.guild.get_member_named(username) is not None:
+            #     username = str(ctx.guild.get_member_named(username))
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
                                                   key="Games Played",
@@ -239,12 +248,14 @@ class Admin(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def addgames(self, ctx, increment, username):
+    async def addgames(self, ctx, increment, username:discord.Member):
         """(increment, *username) Adds games to the username. Negative numbers allowed"""
         if username is None:
             username = str(ctx.author)
-        elif ctx.guild.get_member_named(username) is not None:
-            username = str(ctx.guild.get_member_named(username))
+        else:
+            username = str(username) or str(ctx.guild.get_member_named(username))
+        # elif ctx.guild.get_member_named(username) is not None:
+        #     username = str(ctx.guild.get_member_named(username))
         try:
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
@@ -274,12 +285,14 @@ class Concierge(commands.Cog):
         await ctx.send("```"+output_string+"```")
 
     @commands.command()
-    async def duelist(self, ctx, username=None):
+    async def duelist(self, ctx, username: discord.Member=None):
         """(*username) Shows the info of a given user, including stats!."""
         if username is None:
             username = str(ctx.author)
-        elif ctx.guild.get_member_named(username) is not None:
-            username = str(ctx.guild.get_member_named(username))
+        else:
+            username = str(username) or str(ctx.guild.get_member_named(username))
+        # elif ctx.guild.get_member_named(username) is not None:
+        #     username = str(ctx.guild.get_member_named(username))
 
         key_val_strings = []
         player_info = ygos.get_player_info(username=username)
@@ -321,11 +334,10 @@ class Concierge(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def recordvs(self, ctx, opponent):
+    async def recordvs(self, ctx, opponent:discord.Member):
         """(opponent) Shows your record against an opponent."""
         try:
-            if ctx.guild.get_member_named(opponent) is not None:
-                opponent = str(ctx.guild.get_member_named(opponent))
+            opponent = str(opponent) or str(ctx.guild.get_member_named(opponent))
             username = str(ctx.author)
             player_info = ygos.get_player_info(sheet_name="match_history", username=username)
             opponent_info = ygos.get_player_info(sheet_name="match_history", username=opponent)
@@ -339,11 +351,13 @@ class UpdatingRecords(commands.Cog):
     def __init__(self, b):
         self.bot = b
     @commands.command()
-    async def winvs(self, ctx, loser=None, num_wins=1):
+    async def winvs(self, ctx, loser:discord.Member=None, num_wins=1):
         """(opponent, *numwins) Record a win against a player. Can specify number of wins after the opponent's name."""
+        if str(loser) == str(ctx.author) or str(ctx.guild.get_member_named(loser)==str(ctx.author)):
+            await ctx.send("You cannot play against yourself.")
+            return
         try:
-            if ctx.guild.get_member_named(loser) is not None:
-                loser = str(ctx.guild.get_member_named(loser))
+            loser = str(loser) or str(ctx.guild.get_member_named(loser))
             winner = str(ctx.author)
             if not ygos.check_player_registered(loser) or \
                         not ygos.check_player_registered(winner):
@@ -367,12 +381,14 @@ class UpdatingRecords(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def spendcoins(self, ctx, increment, username=None):
+    async def spendcoins(self, ctx, increment, username: discord.Member=None):
         """(amount, *username) Awards coins to the username. Negative numbers allowed"""
         if username is None:
             username = str(ctx.author)
-        elif ctx.guild.get_member_named(username) is not None:
-            username = str(ctx.guild.get_member_named(username))
+        else:
+            username = str(username) or str(ctx.guild.get_member_named(username))
+        # elif ctx.guild.get_member_named(username) is not None:
+        #     username = str(ctx.guild.get_member_named(username))
         try:
             new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
