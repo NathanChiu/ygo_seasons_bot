@@ -44,7 +44,7 @@ async def register(ctx, alias=None):
         alias = username
     try:
         ygos.create_new_player(username=username)
-        ygos.set_user_value(username=username, key="Alias", value=alias)
+        ygos.set_record_value(id=username, key="Alias", value=alias)
         await ctx.send(f"Successfully created player {username} with alias {alias}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
@@ -162,23 +162,27 @@ async def lose(ctx):
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def games(ctx, username, new_val):
+async def setgames(ctx, value=None, username=None):
     """Sets the games of the player."""
     try:
-        ygos.set_user_value(sheet_name="coin_tracker",
-                            username=username,
+        if username is None:
+            _username = str(ctx.author)
+        ygos.set_record_value(sheet_name="coin_tracker",
+                            id=_username,
                             key="Games Played",
-                            value=new_val)
-        await ctx.send(f"Changing {username}'s games to {new_val}")
+                            value=value)
+        await ctx.send(f"Changing {_username}'s games to {value}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
 
 @bot.command()
-async def coins(ctx, username, value):
+async def setcoins(ctx, value=None, username=None):
     """Sets the user's coin stash to the given value."""
     try:
-        ygos.set_user_value(sheet_name="coin_tracker",
-                            username=username,
+        if username is None:
+            _username = str(ctx.author)
+        ygos.set_record_value(sheet_name="coin_tracker",
+                            id=username,
                             key="Current AFKoins",
                             value=new_val)
         await ctx.send(f"Changing {username}'s AFKoin stash from {current_coins} to {value}")
@@ -191,7 +195,7 @@ async def setalias(ctx, _alias):
     try:
         username = str(ctx.author)
         ygos.check_player_registered(username)
-        ygos.set_user_value(username=username, key="Alias", value=_alias)
+        ygos.set_record_value(id=username, key="Alias", value=_alias)
         await ctx.send(f"Alias for {username} successfully changed to {_alias}")
     except Exception as e:
         await ctx.send(f"Error: {e}")
@@ -208,7 +212,7 @@ async def setcard(ctx, *args):
         if requested_card.status_code != 200:
             await ctx.send(f"Could not find your card on YGOPro. Please make sure your card is spelt correctly.")
         else:
-            ygos.set_user_value(username=username, key="Signature Card", value=sig_card_name)
+            ygos.set_record_value(record=username, key="Signature Card", value=sig_card_name)
             await ctx.send(f"Signature card successfully set to {sig_card_name}")
     except Exception as e:
         await ctx.send(f"Error: {e}")

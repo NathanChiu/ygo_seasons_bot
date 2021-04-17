@@ -79,8 +79,17 @@ class YGOSpreadsheet:
         Returns a list of registered usernames.
         """
         usernames = self.read_values(read_range=["A", "A"])
-        # Only show through all
         return flatten_list(usernames)[1:]
+
+    def get_first_column(self, sheet_name="coin_tracker"):
+        """
+        Returns the first column
+        """
+        """
+        Returns a list of registered usernames.
+        """
+        column = self.read_values(sheet_name=sheet_name, read_range=["A", "A"])
+        return flatten_list(column)[1:]
 
     def get_tournaments(self):
         """
@@ -249,16 +258,33 @@ class YGOSpreadsheet:
         player_info = self.get_player_info(sheet_name=sheet_name, username=username)
         current_value = int(player_info[key])
         new_value = int(value) + current_value
-        self.set_user_value(username=username, key=key, value=new_value)
+        self.set_record_value(id=username, key=key, value=new_value)
         return new_value
 
-    def set_user_value(self, sheet_name="coin_tracker", username=None, key=None, value=None):
-        player_info = self.get_player_info(sheet_name=sheet_name, username=username)
+    # def set_user_value(self, sheet_name="coin_tracker", username=None, key=None, value=None):
+    #     player_info = self.get_player_info(sheet_name=sheet_name, username=username)
+    #     if key is None or value is None:
+    #         raise ValueError(f"Need a key value pair, got key: {key}, value: {value}.")
+    #     headers = self.get_headers(sheet_name=sheet_name)
+    #     if key in headers:
+    #         row_num = self.usernames.index(username) + 2
+    #         col_num = headers.index(key) + 1
+    #         col_char = excel_column_name(col_num)
+    #         cell_name = f"{col_char}{row_num}"
+    #         self.write_values(sheet_name=sheet_name, write_range=[f"{cell_name}", f"{cell_name}"], values=[[value]])
+
+    def set_record_value(self, sheet_name="coin_tracker", id=None, key=None, value=None):
+        """
+        Sets the value in a record. Uses id to determine which record to edit,
+        and key to determine the column.
+        """
+        # player_info = self.get_player_info(sheet_name=sheet_name, username=username)
         if key is None or value is None:
             raise ValueError(f"Need a key value pair, got key: {key}, value: {value}.")
         headers = self.get_headers(sheet_name=sheet_name)
+        id_column = self.get_first_column(sheet_name=sheet_name)
         if key in headers:
-            row_num = self.usernames.index(username) + 2
+            row_num = id_column.index(id) + 2
             col_num = headers.index(key) + 1
             col_char = excel_column_name(col_num)
             cell_name = f"{col_char}{row_num}"
@@ -282,7 +308,7 @@ class YGOSpreadsheet:
     @property
     def match_history_headers(self):
         return self.get_headers(sheet_name="match_history")
-    
+
     @property
     def tournament_headers(self):
         return self.get_headers(sheet_name="tournaments")
@@ -307,5 +333,5 @@ if __name__ == '__main__':
     # ygos.write_values(write_range=["A6", "E"], values=values)
     # ygos.get_player_info("Alice")
     # ygos.create_new_player("Fred")
-    ygos.set_user_value(username="Fred", key="Current AFKoins", value="5")
+    # ygos.set_user_value(username="Fred", key="Current AFKoins", value="5")
     # print(ygos.sheet.get_all_records())
