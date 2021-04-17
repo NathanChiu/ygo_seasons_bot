@@ -300,6 +300,7 @@ class Concierge(commands.Cog):
         key_val_strings.append(f"'Alias': {player_info['Alias']}")
         key_val_strings.append(f"'Signature Card': {player_info['Signature Card']}")
         num_games = int(player_info["Games Played"])
+        key_val_strings.append(f"'AFKoins': {player_info['Current AFKoins']}")
         player_info = ygos.get_player_info(sheet_name="match_history", username=username)
         num_wins = 0
         for wins in player_info.values():
