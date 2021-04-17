@@ -21,8 +21,12 @@ description = '''Bot for AFKyle's YuGiOh Seasons\n
                  \t\tType ?[command] to issue a command. Try the 'help' command to get a list of available commands.
                  \t\tCommand arguments are presented in their help strings. Arguments should be space separated. (*) denotes optional arguments.
               '''
-bot = commands.Bot(command_prefix='?', description=description)
+intents = discord.Intents().all()
+bot = commands.Bot(command_prefix='?', description=description, intents=intents)
 ygos = YGOSpreadsheet(json_directory=os.path.join('src', 'ygo_sheet_grabber'))
+
+def nickname_2_is(ctx, nickname):
+    return ctx.guild.get_member_named(nickname[1:])
 
 @bot.event
 async def on_ready():
@@ -110,6 +114,8 @@ class Admin(commands.Cog):
         try:
             if username is None:
                 _username = str(ctx.author)
+            elif ctx.guild.get_member_named(username) is not None:
+                username = str(ctx.guild.get_member_named(username))
             ygos.set_record_value(sheet_name="coin_tracker",
                                 id=_username,
                                 key="Games Played",
@@ -124,6 +130,8 @@ class Admin(commands.Cog):
         try:
             if username is None:
                 _username = str(ctx.author)
+            elif ctx.guild.get_member_named(username) is not None:
+                username = str(ctx.guild.get_member_named(username))
             ygos.set_record_value(sheet_name="coin_tracker",
                                 id=username,
                                 key="Current AFKoins",
@@ -136,6 +144,8 @@ class Admin(commands.Cog):
     async def settournamentwinner(self, ctx, id, winner):
         """(id, winner) Sets the winner of a tournament."""
         try:
+            if ctx.guild.get_member_named(winner) is not None:
+                winner = str(ctx.guild.get_member_named(winner))
             tournaments = ygos.get_all_record_dict(sheet_name="tournaments")
             if ygos.check_player_registered(winner) and str(id) in tournaments:
                 ygos.set_record_value(sheet_name="tournaments", \
@@ -177,6 +187,8 @@ class Admin(commands.Cog):
         """(increment, *username) Awards coins to the username. Negative numbers allowed"""
         if username is None:
             username = str(ctx.author)
+        elif ctx.guild.get_member_named(username) is not None:
+            username = str(ctx.guild.get_member_named(username))
         try:
             new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
@@ -192,6 +204,8 @@ class Admin(commands.Cog):
         try:
             if username is None:
                 username = str(ctx.author)
+            elif ctx.guild.get_member_named(username) is not None:
+                username = str(ctx.guild.get_member_named(username))
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
                                                   key="Games Played",
@@ -210,6 +224,8 @@ class Admin(commands.Cog):
         try:
             if username is None:
                 username = str(ctx.author)
+            elif ctx.guild.get_member_named(username) is not None:
+                username = str(ctx.guild.get_member_named(username))
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
                                                   key="Games Played",
@@ -227,6 +243,8 @@ class Admin(commands.Cog):
         """(increment, *username) Adds games to the username. Negative numbers allowed"""
         if username is None:
             username = str(ctx.author)
+        elif ctx.guild.get_member_named(username) is not None:
+            username = str(ctx.guild.get_member_named(username))
         try:
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
@@ -260,6 +278,9 @@ class Concierge(commands.Cog):
         """(*username) Shows the info of a given user, including stats!."""
         if username is None:
             username = str(ctx.author)
+        elif ctx.guild.get_member_named(username) is not None:
+            username = str(ctx.guild.get_member_named(username))
+
         key_val_strings = []
         player_info = ygos.get_player_info(username=username)
         key_val_strings.append(f"'Username': {player_info['Username']}")
@@ -271,7 +292,7 @@ class Concierge(commands.Cog):
         for wins in player_info.values():
             if wins.isdigit():
                 num_wins += int(wins)
-        key_val_strings.append(f"'Win rate (total games)': {num_wins/num_games:.2f}({num_games})")
+        key_val_strings.append(f"'Win rate (total games)': {num_wins/max(num_games,1):.2f}({num_games})")
         tourns = ygos.tournaments_won(username)
         key_val_strings.append(f"'Tournaments won': {len(tourns)}")
         output_string = "\n".join(key_val_strings)
@@ -303,6 +324,8 @@ class Concierge(commands.Cog):
     async def recordvs(self, ctx, opponent):
         """(opponent) Shows your record against an opponent."""
         try:
+            if ctx.guild.get_member_named(opponent) is not None:
+                opponent = str(ctx.guild.get_member_named(opponent))
             username = str(ctx.author)
             player_info = ygos.get_player_info(sheet_name="match_history", username=username)
             opponent_info = ygos.get_player_info(sheet_name="match_history", username=opponent)
@@ -319,6 +342,8 @@ class UpdatingRecords(commands.Cog):
     async def winvs(self, ctx, loser=None, num_wins=1):
         """(opponent, *numwins) Record a win against a player. Can specify number of wins after the opponent's name."""
         try:
+            if ctx.guild.get_member_named(loser) is not None:
+                loser = str(ctx.guild.get_member_named(loser))
             winner = str(ctx.author)
             if not ygos.check_player_registered(loser) or \
                         not ygos.check_player_registered(winner):
@@ -346,6 +371,8 @@ class UpdatingRecords(commands.Cog):
         """(amount, *username) Awards coins to the username. Negative numbers allowed"""
         if username is None:
             username = str(ctx.author)
+        elif ctx.guild.get_member_named(username) is not None:
+            username = str(ctx.guild.get_member_named(username))
         try:
             new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
