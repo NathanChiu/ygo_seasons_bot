@@ -33,9 +33,6 @@ async def on_ready():
     logger.info(f"Logged in username: {bot.user.name}, id: {bot.user.id}.")
     logger.info(ygos.usernames)
     logger.info("Ready to go!")
-    # logger.info(ygos.get_all_player_info())
-    # logger.info(ygos.get_player_info(username="klarq#4529"))
-    # logger.info(ygos.get_player_info(username="klarq#4529", sheet_name="match_history"))
 
 class Profile(commands.Cog):
     def __init__(self, b):
@@ -116,8 +113,6 @@ class Admin(commands.Cog):
                 _username = str(ctx.author)
             else:
                 _username = str(username) or str(ctx.guild.get_member_named(username))
-            # elif ctx.guild.get_member_named(username) is not None:
-            #     username = str(ctx.guild.get_member_named(username))
             ygos.set_record_value(sheet_name="coin_tracker",
                                 id=_username,
                                 key="Games Played",
@@ -134,13 +129,11 @@ class Admin(commands.Cog):
                 _username = str(ctx.author)
             else:
                 _username = str(username) or str(ctx.guild.get_member_named(username))
-            # elif ctx.guild.get_member_named(username) is not None:
-            #     username = str(ctx.guild.get_member_named(username))
             ygos.set_record_value(sheet_name="coin_tracker",
                                 id=_username,
                                 key="Current AFKoins",
                                 value=value)
-            await ctx.send(f"Changing {username}'s AFKoin stash from {current_coins} to {value}")
+            await ctx.send(f"Changing {username}'s AFKoin stash to {value}")
         except Exception as e:
             await ctx.send(f"Error: {e}")
 
@@ -192,8 +185,6 @@ class Admin(commands.Cog):
             username = str(ctx.author)
         else:
             username = str(username) or str(ctx.guild.get_member_named(username))
-        #elif ctx.guild.get_member_named(username) is not None:
-        #    username =  str(ctx.guild.get_member_named(username))
         try:
             new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
@@ -211,8 +202,6 @@ class Admin(commands.Cog):
                 username = str(ctx.author)
             else:
                 username = str(username) or str(ctx.guild.get_member_named(username))
-            # elif ctx.guild.get_member_named(username) is not None:
-            #     username = str(ctx.guild.get_member_named(username))
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
                                                   key="Games Played",
@@ -233,8 +222,6 @@ class Admin(commands.Cog):
                 username = str(ctx.author)
             else:
                 username = str(username) or str(ctx.guild.get_member_named(username))
-            # elif ctx.guild.get_member_named(username) is not None:
-            #     username = str(ctx.guild.get_member_named(username))
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
                                                   key="Games Played",
@@ -254,8 +241,6 @@ class Admin(commands.Cog):
             username = str(ctx.author)
         else:
             username = str(username) or str(ctx.guild.get_member_named(username))
-        # elif ctx.guild.get_member_named(username) is not None:
-        #     username = str(ctx.guild.get_member_named(username))
         try:
             new_games = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
@@ -291,8 +276,6 @@ class Concierge(commands.Cog):
             username = str(ctx.author)
         else:
             username = str(username) or str(ctx.guild.get_member_named(username))
-        # elif ctx.guild.get_member_named(username) is not None:
-        #     username = str(ctx.guild.get_member_named(username))
 
         key_val_strings = []
         player_info = ygos.get_player_info(username=username)
@@ -388,8 +371,6 @@ class UpdatingRecords(commands.Cog):
             username = str(ctx.author)
         else:
             username = str(username) or str(ctx.guild.get_member_named(username))
-        # elif ctx.guild.get_member_named(username) is not None:
-        #     username = str(ctx.guild.get_member_named(username))
         try:
             new_coins = ygos.increment_user_value(sheet_name="coin_tracker",
                                                   username=username,
@@ -400,10 +381,6 @@ class UpdatingRecords(commands.Cog):
             await ctx.send(f"Error: {e}")
 
 bot.add_cog(UpdatingRecords(bot))
-
-
-
-
 
 @bot.event
 async def on_message(message):
@@ -424,7 +401,6 @@ async def on_message(message):
                 os.remove("afkseasons.ydk")
                 os.remove("afkseasons.lflist.conf")
     await bot.process_commands(message) #allows over commands to be processed while bot listens
-# bot.add_
 
 def start_bot():
     bot.run(TOKEN)
