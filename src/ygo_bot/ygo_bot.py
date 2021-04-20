@@ -99,23 +99,6 @@ class Profile(commands.Cog):
         except Exception as e:
             await ctx.send(f"Error: {e}")
 
-    @commands.command()
-    async def card(self, ctx, *args):
-        """Show off your signature card!"""
-        try:
-            sig_card_name = " ".join(args[:])
-            sig_card_name_encoded = urllib.parse.quote_plus(sig_card_name)
-            requested_card = requests.get(f"https://db.ygoprodeck.com/api/v7/cardinfo.php?name={sig_card_name_encoded}")
-            if requested_card.status_code != 200:
-                await ctx.send(f"Could not find your card on YGOPro. Please make sure the name is entered correctly.")
-            else:
-                # Get the image_url
-                card_info = json.loads(requested_card.text)
-                image_url = card_info["data"][0]["card_images"][-1]["image_url"]
-                await ctx.send(f"{image_url}")
-        except Exception as e:
-            await ctx.send(f"Error: {e}")
-
 bot.add_cog(Profile(bot))
 
 class Admin(commands.Cog):
@@ -394,6 +377,23 @@ class UpdatingRecords(commands.Cog):
                                                   key="Current AFKoins",
                                                   value=-int(increment))
             await ctx.send(f"{username} spent {increment} coin(s)! New balance: {new_coins}")
+        except Exception as e:
+            await ctx.send(f"Error: {e}")
+
+    @commands.command()
+    async def card(self, ctx, *args):
+        """Show off your signature card!"""
+        try:
+            sig_card_name = " ".join(args[:])
+            sig_card_name_encoded = urllib.parse.quote_plus(sig_card_name)
+            requested_card = requests.get(f"https://db.ygoprodeck.com/api/v7/cardinfo.php?name={sig_card_name_encoded}")
+            if requested_card.status_code != 200:
+                await ctx.send(f"Could not find your card on YGOPro. Please make sure the name is entered correctly.")
+            else:
+                # Get the image_url
+                card_info = json.loads(requested_card.text)
+                image_url = card_info["data"][0]["card_images"][-1]["image_url"]
+                await ctx.send(f"{image_url}")
         except Exception as e:
             await ctx.send(f"Error: {e}")
 
