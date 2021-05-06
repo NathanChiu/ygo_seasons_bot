@@ -195,7 +195,7 @@ class Admin(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def win(self, ctx, num=1, username: discord.Member=None):
+    async def editwin(self, ctx, num=1, username: discord.Member=None):
         """(increment, *username) Increments the games and coins of the player from a win."""
         try:
             if username is None:
@@ -215,7 +215,7 @@ class Admin(commands.Cog):
             await ctx.send(f"Error: {e}")
 
     @commands.command()
-    async def lose(self, ctx, num=1, username: discord.Member=None):
+    async def editlose(self, ctx, num=1, username: discord.Member=None):
         """Increments the games and coins of the player from a loss."""
         try:
             if username is None:
