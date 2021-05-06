@@ -334,14 +334,20 @@ bot.add_cog(Concierge(bot))
 class UpdatingRecords(commands.Cog):
     def __init__(self, b):
         self.bot = b
+
     @commands.command()
     async def winvs(self, ctx, loser:discord.Member=None, num_wins=1):
         """(opponent, *numwins) Record a win against a player. Can specify number of wins after the opponent's name."""
-        if str(loser) == str(ctx.author) or str(ctx.guild.get_member_named(loser)==str(ctx.author)):
+        logger.info(f"{str(loser)}, {str(ctx.author)}")
+        logger.info(f"{str(ctx.guild.get_member_named(str(loser)))}, {str(ctx.author)}")
+        if str(loser) == str(ctx.author) or str(ctx.guild.get_member_named(str(loser))) == str(ctx.author):
             await ctx.send("You cannot play against yourself.")
             return
         try:
-            loser = str(loser) or str(ctx.guild.get_member_named(loser))
+            if loser is not None:
+                loser = str(loser)
+            else:
+                loser = str(ctx.guild.get_member_named(loser))
             winner = str(ctx.author)
             if not ygos.check_player_registered(loser) or \
                         not ygos.check_player_registered(winner):
