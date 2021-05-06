@@ -74,7 +74,7 @@ class Profile(commands.Cog):
             if requested_card.status_code != 200:
                 await ctx.send(f"Could not find your card on YGOPro. Please make sure your card is spelt correctly.")
             else:
-                ygos.set_record_value(record=username, key="Signature Card", value=sig_card_name)
+                ygos.set_record_value(id=username, key="Signature Card", value=sig_card_name)
                 await ctx.send(f"Signature card successfully set to {sig_card_name}")
         except Exception as e:
             await ctx.send(f"Error: {e}")
@@ -383,6 +383,23 @@ class UpdatingRecords(commands.Cog):
                                                   key="Current AFKoins",
                                                   value=-int(increment))
             await ctx.send(f"{username} spent {increment} coin(s)! New balance: {new_coins}")
+        except Exception as e:
+            await ctx.send(f"Error: {e}")
+
+    @commands.command()
+    async def card(self, ctx, *args):
+        """Show off your signature card!"""
+        try:
+            sig_card_name = " ".join(args[:])
+            sig_card_name_encoded = urllib.parse.quote_plus(sig_card_name)
+            requested_card = requests.get(f"https://db.ygoprodeck.com/api/v7/cardinfo.php?name={sig_card_name_encoded}")
+            if requested_card.status_code != 200:
+                await ctx.send(f"Could not find your card on YGOPro. Please make sure the name is entered correctly.")
+            else:
+                # Get the image_url
+                card_info = json.loads(requested_card.text)
+                image_url = card_info["data"][0]["card_images"][-1]["image_url"]
+                await ctx.send(f"{image_url}")
         except Exception as e:
             await ctx.send(f"Error: {e}")
 
