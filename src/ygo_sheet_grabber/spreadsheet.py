@@ -51,7 +51,7 @@ class YGOSpreadsheet:
         Need to create the service and expose the sheet to usage.
         """
         self.json_directory = json_directory
-        self.client_json_path = os.path.join(json_directory, 'clientjson')
+        self.client_json_path = os.path.join(json_directory, 'client.json')
         self.token_json_path = os.path.join(json_directory, 'token.json')
         self.prepare_credentials()
         service = build('sheets', 'v4', credentials=self.creds)
