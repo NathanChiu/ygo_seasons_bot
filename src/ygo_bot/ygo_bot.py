@@ -8,10 +8,16 @@ import json
 from src.ygo_sheet_grabber.spreadsheet import YGOSpreadsheet
 from src.ydk_converter.ydkconverter import convert_ydk
 from src.ygo_bot.bot_params import Rewards
+from .config import disc_token
 
 logger = logging.getLogger(__name__)
 
-TOKEN = 'ODMwMzE2ODIxODY5MzYzMjEy.YHE6zA.ynGT4tmXWWnjfxyPaJvx4DHCmsw'
+# token_file = open(os.path.join("token.txt"), "r")
+# TOKEN = token_file.read()
+# token_file.close()
+
+TOKEN = disc_token
+# TOKEN = 'ODMwMzE2ODIxODY5MzYzMjEy.YHE6zA.ynGT4tmXWWnjfxyPaJvx4DHCmsw'
 
 description = '''Bot for AFKyle's YuGiOh Seasons\n
                  Features: \n
