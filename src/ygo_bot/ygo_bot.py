@@ -168,7 +168,7 @@ class Admin(commands.Cog):
                                       id=str(id), \
                                       key="Tournament", \
                                       value=name)
-            await ctx.send(f"{winner} has been crowned the winner of tournament #{id}!")
+            await ctx.send(f"New tournament created at id: {id} named {name}.")
         except Exception as e:
             await ctx.send(f"Error: {e}")
 
